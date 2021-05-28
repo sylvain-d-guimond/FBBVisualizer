@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+        <title>Babylon Testing</title>
+
+        <style>
+            html, body {
+                overflow: hidden;
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+
+            #renderCanvas {
+                width: 100%;
+                height: 100%;
+                touch-action: none;
+            }
+        </style>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/ammo.js"></script>
+        <script src="https://preview.babylonjs.com/cannon.js"></script>
+        <script src="https://preview.babylonjs.com/Oimo.js"></script>
+        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
+        <script src="https://preview.babylonjs.com/babylon.js"></script>
+        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+    </head>
+
+   <body>
+
+    <canvas id="renderCanvas" touch-action="none"></canvas> <!-- touch-action="none" for best results from PEP -->
+
+    <script>
+        const canvas = document.getElementById("renderCanvas"); // Get the canvas element
+        const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true}); // Generate the BABYLON 3D engine
+
+        // Add your code here matching the playground format
+        const createScene = function () {
+    
+            const scene = new BABYLON.Scene(engine);  
+			scene.environmentTexture = new BABYLON.CubeTexture("https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/_textures/environment.env", scene);
+
+			var assetsManager = new BABYLON.AssetsManager(scene);
+			var meshTask = assetsManager.addMeshTask("car task", "", "https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/", "cobra.glb");
+
+            const camera = new BABYLON.ArcRotateCamera("camera", -Math.PI / 2, Math.PI / 2.5, 15, new BABYLON.Vector3(0, 0.6, 0));
+			camera.upperRadiusLimit = 10;
+			camera.lowerRadiusLimit = 5;
+			camera.upperBetaLimit = 1.5;
+			camera.lowerBetaLimit = 0.5;
+			camera.pinchPrecision = 500 ;
+			camera.minZ = 0.01;
+            camera.attachControl(canvas, true);
+            const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
+			var spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
+			
+			
+			var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
+			var skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
+			skyboxMaterial.backFaceCulling = false;
+			skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/_textures/skybox/mall2", scene);
+			skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+			skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+			skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+			skybox.material = skyboxMaterial;
+				/*
+			meshTask.onSuccess = function (task) {
+				var carPaintMaterial = scene.getMaterialByName("Carroserie");
+				var chromeMat = scene.getMaterialByName("Chrome");
+				var lampMat = scene.getMaterialByName("Lamp");
+				var tireMat = scene.getMaterialByName("Pneu");
+				var carPaintProbe = new BABYLON.ReflectionProbe("carPaintProbe", 512, scene);
+				carPaintProbe.renderList.push(skybox);
+				carPaintProbe.renderList.push(scene.getMeshByName("Ground"));
+				carPaintMaterial.reflectionTexture = carPaintProbe.cubeTexture;
+				chromeMat.reflectionTexture = carPaintProbe.cubeTexture;
+				lampMat.reflectionTexture = carPaintProbe.cubeTexture;
+				tireMat.reflectionTexture = carPaintProbe.cubeTexture;
+				var carMesh = scene.getMeshByName("cobraCar");
+				carPaintProbe.attachToMesh(carMesh);
+			}*/
+			
+			assetsManager.load();
+			
+			var pipeline = new BABYLON.DefaultRenderingPipeline(
+				"defaultPipeline", // The name of the pipeline
+				true, // Do you want the pipeline to use HDR texture?
+				scene, // The scene instance
+				[camera] // The list of cameras to be attached to
+			);
+			
+			//bloom
+			pipeline.bloomEnabled = true;
+			pipeline.bloomThreshold = 0.6;
+			pipeline.bloomWeight = 0.3;
+			pipeline.bloomKernel = 64;
+			pipeline.bloomScale = 0.5;
+			
+			//tonemapping
+			pipeline.imageProcessing.toneMappingEnabled = true;
+			pipeline.imageProcessing.contrast = 1.5;
+			pipeline.imageProcessing.exposure = 1;
+			
+			//MSAA
+			pipeline.samples = 4;
+
+            return scene;
+        };
+
+        const scene = createScene(); //Call the createScene function
+
+        // Register a render loop to repeatedly render the scene
+        engine.runRenderLoop(function () {
+                if (scene && scene.activeCamera) {
+                    scene.render();
+                }
+            });
+
+        // Watch for browser/canvas resize events
+        window.addEventListener("resize", function () {
+                engine.resize();
+        });
+    </script>
+
+   </body>
+
+</html>
