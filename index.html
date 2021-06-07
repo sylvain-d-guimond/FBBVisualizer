@@ -3,7 +3,7 @@
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <title>Babylon Testing</title>
+        <title>FBB Visualizer</title>
 
         <style>
             html, body {
@@ -44,17 +44,23 @@
         const canvas = document.getElementById("renderCanvas"); // Get the canvas element
         const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true}); // Generate the BABYLON 3D engine
 
-		const ModelURL = "https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/cobra.glb";
+		//const ModelURL = "https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/cobra.glb";
+		const ModelURL = "../Models/Plane.glb";
+		const EnvURL = "../Models/Scene_Setup_Environment.glb";
 		var cameras = [];
 
 		const createScene = function () {
 
 			const scene = new BABYLON.Scene(engine);
-			scene.environmentTexture = new BABYLON.CubeTexture("https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/_textures/environment.env", scene);
+			scene.environmentTexture = new BABYLON.CubeTexture("../Models/autoshop.env", scene);
 
 			var assetsManager = new BABYLON.AssetsManager(scene);
+			var envTask = assetsManager.addMeshTask("environment task", "", EnvURL, "");
+			
+			assetsManager.load();
 
 			loadAndUseModel(scene, ModelURL);
+			//loadAndUseModel(scene, EnvURL);
 			
 			//Needs an initial camera or Babylon complains, but still runs
 			const cam = new BABYLON.ArcRotateCamera("camera",-Math.PI / 4,Math.PI / 2.5,10,BABYLON.Vector3(0,1,0), scene);
@@ -64,22 +70,23 @@
 			var spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
 
 			//Add skybox
-			var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+			/*var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
 			skybox.isPickable = false;
 			var skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
 			skyboxMaterial.backFaceCulling = false;
-			skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/_textures/skybox/mall2", scene);
+			skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("../Models/skybox/autoshop", scene);
 			skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
 			skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
 			skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-			skybox.material = skyboxMaterial;
+			skybox.material = skyboxMaterial;*/
+			scene.clearColor = new BABYLON.Color3(0.85, 0.8, 0.77);
 
 			//Add Postprocessing
 			pipeline = new BABYLON.DefaultRenderingPipeline("renderingPipeline", true);
 
 			//bloom
 			pipeline.bloomEnabled = true;
-			pipeline.bloomThreshold = 0.6;
+			pipeline.bloomThreshold = 2;
 			pipeline.bloomWeight = 0.3;
 			pipeline.bloomKernel = 64;
 			pipeline.bloomScale = 0.5;
@@ -91,6 +98,14 @@
 
 			//MSAA
 			//pipeline.samples = 4;
+			
+			//Vignette
+			postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, cam);
+			postProcess.vignetteWeight = 10;
+			postProcess.vignetteStretch = 2;
+			postProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
+			postProcess.vignetteEnabled = true;
+
 
 
 			//Interaction
@@ -98,8 +113,13 @@
 				console.log("pickinfo", pickinfo);
 				if (pickinfo.hit)
 					//alert(pickinfo.pickedMesh.name)
-					setColor(pickinfo.pickedMesh.material);
-			};		
+					processClick(pickinfo.pickedMesh);
+			};
+			
+			//Environment loaded
+			envTask.onSuccess = function (task) {
+				scene.getMeshByName("GEO_Floor").isPickable = false;
+			}
 
 			return scene;
 		}
@@ -126,6 +146,7 @@
 						loadedCamera = arcCamera;
 						//loadedCamera = camera;
 						pipeline.addCamera(arcCamera);
+						postProcess.activate(arcCamera);
 						cameras.push(arcCamera);
 					})
 
@@ -139,10 +160,6 @@
 			//Load scene
 			BABYLON.SceneLoader.LoadAssetContainerAsync(url, undefined, scene).then(
 				(assetContainer) => {
-					//console.log('assetContainer', assetContainer);
-					//console.log('assetContainer cameras', assetContainer.cameras);
-					//console.log('loadedCamera', loadedCamera);
-
 					assetContainer.addAllToScene();
 					initCameraLimits();
 					initUI();
@@ -187,17 +204,32 @@
 			var control1 = scene.getMeshByName("Sphere");
 			var control2 = scene.getMeshByName("Sphere.001");
 			var control3 = scene.getMeshByName("Sphere.002");
+			var control4 = scene.getMeshByName("Sphere.003");
+			var control5 = scene.getMeshByName("Sphere.004");
+			var control6 = scene.getMeshByName("Sphere.005");
+			var control7 = scene.getMeshByName("Sphere.006");
 
-			control1.isPickable = control2.isPickable = control3.isPickable = true;
+			control1.isPickable = control2.isPickable = control3.isPickable = control4.isPickable =
+			control5.isPickable = control6.isPickable = control7.isPickable = true;
+			
+			var switchCamInt = scene.getMeshByName("Switch_CamInt01");
+			switchCamInt.isPickable = true;
+		}
+		
+		const processClick = (clickedMesh) => {
+			if (clickedMesh.name.includes("Switch_")){
+				setActiveCamera(clickedMesh.name.replace("Switch_",""));
+			}
+			
+			if (clickedMesh.name.includes("Sphere")){
+				setColor(clickedMesh.material)
+			}
 		}
 
 		const setColor = (material) => {
-			var body = scene.getMeshByName("Carosserie _primitive0")
-			var doors = scene.getMeshByName("Portes")
-			var trunk = scene.getMeshByName("Coffre")
-			var hood = scene.getMeshByName("Capot")
+			var body = scene.getMeshByName("GEO_Plane_Body")
 
-			body.material = doors.material = trunk.material = hood.material = material;
+			body.material = material;
 		}
 
         const scene = createScene(); //Call the createScene function
