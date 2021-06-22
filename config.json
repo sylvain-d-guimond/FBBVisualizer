@@ -1,0 +1,15 @@
+{
+    "paths": {
+        "camerasURL": "../Models/cameras.glb",
+        "modelExtURL": "../Models/Exterior_and_Cams_without_Metallic.glb",
+        "modelIntURL": "../Models/Interior_and_Cam.glb",
+        "envURL": "../Models/Scene_Setup_for_WebGL_Environment_v002.glb",
+		"useSceneLoader": true
+    },
+    "variants": {
+        "base": "Variant_",
+        "geometry": "geo",
+        "material": "mat",
+        "separator": "_"
+    }
+}

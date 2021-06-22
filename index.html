@@ -22,18 +22,24 @@
         </style>
 
         <script src="https://cdnjs.cloudflare.com/ajax/libs/dat-gui/0.6.2/dat.gui.min.js"></script>
-        <script src="https://preview.babylonjs.com/ammo.js"></script>
-        <script src="https://preview.babylonjs.com/cannon.js"></script>
-        <script src="https://preview.babylonjs.com/Oimo.js"></script>
-        <script src="https://preview.babylonjs.com/earcut.min.js"></script>
-        <script src="https://preview.babylonjs.com/babylon.js"></script>
-        <script src="https://preview.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
-        <script src="https://preview.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
-        <script src="https://preview.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
-        <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.js"></script>
-        <script src="https://preview.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
-        <script src="https://preview.babylonjs.com/gui/babylon.gui.min.js"></script>
-        <script src="https://preview.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+        <script src="https://cdn.babylonjs.com/ammo.js"></script>
+        <script src="https://cdn.babylonjs.com/cannon.js"></script>
+        <script src="https://cdn.babylonjs.com/Oimo.js"></script>
+        <script src="https://cdn.babylonjs.com/earcut.min.js"></script>
+        <script src="https://cdn.babylonjs.com/babylon.js"></script>
+        <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
+        <script src="https://cdn.babylonjs.com/proceduralTexturesLibrary/babylonjs.proceduralTextures.min.js"></script>
+        <script src="https://cdn.babylonjs.com/postProcessesLibrary/babylonjs.postProcess.min.js"></script>
+        <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.js"></script>
+        <script src="https://cdn.babylonjs.com/serializers/babylonjs.serializers.min.js"></script>
+        <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+        <script src="https://cdn.babylonjs.com/inspector/babylon.inspector.bundle.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+		<script src="CameraManager.js"></script>
+		<script src="VariantManager.js"></script>
+		<script src="DebugUI.js"></script>
+		<!--<script src="FBBUI.js"></script>
+		<link href="FBBUI.css" rel="stylesheet">-->
     </head>
 
    <body>
@@ -44,41 +50,25 @@
         const canvas = document.getElementById("renderCanvas"); // Get the canvas element
         const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true}); // Generate the BABYLON 3D engine
 
-		//const ModelURL = "https://raw.githubusercontent.com/sylvain-d-guimond/public_content/main/cobra.glb";
-		const ModelURL = "../Models/Plane.glb";
-		const EnvURL = "../Models/Scene_Setup_Environment.glb";
-		var cameras = [];
+		const configURL = "config_cobra.json";
+		//const configURL = "config.json";
+		let scene = "";
+		var config = "";
+		var switches = [];
+		var cameraManager;
+		var variantManager;
 
 		const createScene = function () {
 
 			const scene = new BABYLON.Scene(engine);
 			scene.environmentTexture = new BABYLON.CubeTexture("../Models/autoshop.env", scene);
 
-			var assetsManager = new BABYLON.AssetsManager(scene);
-			var envTask = assetsManager.addMeshTask("environment task", "", EnvURL, "");
-			
-			assetsManager.load();
-
-			loadAndUseModel(scene, ModelURL);
-			//loadAndUseModel(scene, EnvURL);
-			
 			//Needs an initial camera or Babylon complains, but still runs
-			const cam = new BABYLON.ArcRotateCamera("camera",-Math.PI / 4,Math.PI / 2.5,10,BABYLON.Vector3(0,1,0), scene);
-			cam.attachControl(canvas, true);
+			const cam = new BABYLON.ArcRotateCamera("camera", -Math.PI / 4, Math.PI / 2.5, 10, BABYLON.Vector3(0, 1, 0), scene);
 
 			const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
 			var spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
 
-			//Add skybox
-			/*var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
-			skybox.isPickable = false;
-			var skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
-			skyboxMaterial.backFaceCulling = false;
-			skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("../Models/skybox/autoshop", scene);
-			skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-			skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-			skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-			skybox.material = skyboxMaterial;*/
 			scene.clearColor = new BABYLON.Color3(0.85, 0.8, 0.77);
 
 			//Add Postprocessing
@@ -98,28 +88,56 @@
 
 			//MSAA
 			//pipeline.samples = 4;
-			
+
 			//Vignette
-			postProcess = new BABYLON.ImageProcessingPostProcess("processing", 1.0, cam);
+			postProcess = new BABYLON.ImageProcessingPostProcess("postProcessing", 1.0, cam);
 			postProcess.vignetteWeight = 10;
 			postProcess.vignetteStretch = 2;
 			postProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
 			postProcess.vignetteEnabled = true;
 
+			cameraManager = new CameraManager(pipeline, postProcess, scene);
+			variantManager = new VariantManager(config);
 
+			var assetsManager = new BABYLON.AssetsManager(scene);
+			if (config.paths.useSceneLoader){
+				console.log("Using scene loader");
+				assetsManager.autoHideLoadingUI = false;
+				var extTask = assetsManager.addMeshTask("exterior task", "", config.paths.modelExtURL, "");
+				var envTask = assetsManager.addMeshTask("environment task", "", config.paths.envURL, "");
+				var intTask = assetsManager.addMeshTask("interior task", "", config.paths.modelIntURL, "");
+
+				//Exterior loaded
+				extTask.onSuccess = function (task){
+					console.log("Exterior loaded");
+					setMeshesNotClickable(task);
+				}
+
+				//Environment loaded
+				envTask.onSuccess = function (task) {
+					setMeshesNotClickable(task);
+				}
+
+				//Interior loaded
+				intTask.onSuccess = function (task) {
+					setMeshesNotClickable(task);
+					engine.hideLoadingUI();
+				}
+			}
+
+			loadAndUseModel(scene, config.paths.camerasURL);
+			assetsManager.load();
 
 			//Interaction
 			scene.onPointerDown = (evt, pickinfo) => {
-				console.log("pickinfo", pickinfo);
-				if (pickinfo.hit)
-					//alert(pickinfo.pickedMesh.name)
+				//console.log("pickinfo", pickinfo);
+				if (pickinfo.hit){
+					console.log("RayCast Hit:", pickinfo.pickedMesh.name);
 					processClick(pickinfo.pickedMesh);
+				}
 			};
 			
-			//Environment loaded
-			envTask.onSuccess = function (task) {
-				scene.getMeshByName("GEO_Floor").isPickable = false;
-			}
+			//var UI = new FBBUI(4);
 
 			return scene;
 		}
@@ -130,29 +148,32 @@
 				if (loader.name === 'gltf') {
 
 					//Import cameras from GLTF
-					loader.onCameraLoadedObservable.addOnce((camera) => {
-						console.log('onCameraLoaded', camera);
+					loader.onCameraLoadedObservable.add((camera) => {
+						if (!cameraManager.sceneCameras.includes(camera)){
+							cameraManager.sceneCameras.push(camera);
+						}
 
 						//Convert loaded camera to ArcRotateCamera
 						//TODO: find a better way that doesn't create an extra camera
 						const arcCamera = new BABYLON.ArcRotateCamera(
 							camera.name,
-						//TODO: get actual proper initial angle from camera
+							//TODO: get actual proper initial angle from camera
 							-Math.PI / 4,
 							Math.PI / 2.5,
 							10,
 							camera.lockedTarget, scene);
-						arcCamera.attachControl(canvas, true);
-						loadedCamera = arcCamera;
-						//loadedCamera = camera;
-						pipeline.addCamera(arcCamera);
-						postProcess.activate(arcCamera);
-						cameras.push(arcCamera);
+						cameraManager.checkAndAddCamera(arcCamera);
 					})
 
 					//Set all meshes as non-pickable by default
 					loader.onMeshLoadedObservable.add((mesh) => {
 						mesh.isPickable = false;
+
+						if (mesh.name.includes("Switch_")){
+							console.log("Found switch: ", mesh.name);
+							mesh.isPickable = true;
+							switches.push(mesh);
+						}
 					})
 				}
 			})
@@ -162,91 +183,95 @@
 				(assetContainer) => {
 					assetContainer.addAllToScene();
 					initCameraLimits();
-					initUI();
+					pipeline.addCamera(cameraManager.flyCam);
+					
+					
+					
+					if (!config.paths.useSceneLoader){
+						variantManager.discoverVariants(scene);
+						engine.hideLoadingUI();
+						var ui = new DebugUI();
+						ui.setupUI(variantManager, cameraManager);
+					}
 				},
 			)
 		}
 
+		const setMeshesNotClickable = (meshTask) => {
+			meshTask.loadedMeshes.forEach((mesh) => {
+				mesh.isPickable = false;
+			});
+		}
+
 		//Initialize all camera limits
 		const initCameraLimits = () => {
-			setCameraBounds("CamExt01", -Math.PI, 0, 0.5, 1.5, 5, 20);
+			cameraManager.alignCameras();
+			cameraManager.setCameraBounds("CamExt01", -2*Math.PI, 2*Math.PI, 0.5, 1.5, 5, 20);
+			cameraManager.setCameraBounds("CamInt01", Math.PI*0.6, Math.PI*2, 0.8, 1.5, 0.5, 0.55);
+			//setCameraBounds("CamInt01", -2*Math.PI, 3*Math.PI, 0.4, 1.5, 0.5, 1.5);
 
 			//Default Camera
-			setActiveCamera("CamExt01");
+			cameraManager.setActiveCamera("CamExt01");
 		}
 
-		const setCameraBounds = (name, xMin, xMax, yMin, yMax, zMin, zMax) => {
-			var camera = cameras.filter(cam => {
-				return cam.name === name;
-			})[0];
-
-			console.log("Set camera bounds: ", camera);
-			camera.upperRadiusLimit = zMax;
-			camera.lowerRadiusLimit = zMin;
-			camera.upperBetaLimit = yMax;
-			camera.lowerBetaLimit = yMin;
-			camera.upperAlphaLimit = xMax;
-			camera.lowerAlphaLimit = xMin;
-			camera.pinchPrecision = 500;
-			camera.wheelPrecision = 50;
-			camera.minZ = 0.01;
-		}
-
-		const setActiveCamera = (cameraName) => {
-			var camera = cameras.filter(cam => {
-				return cam.name === cameraName;
-			})[0];
-
-			scene.activeCamera = camera;
-		}
-
-		const initUI = () => {
-			var control1 = scene.getMeshByName("Sphere");
-			var control2 = scene.getMeshByName("Sphere.001");
-			var control3 = scene.getMeshByName("Sphere.002");
-			var control4 = scene.getMeshByName("Sphere.003");
-			var control5 = scene.getMeshByName("Sphere.004");
-			var control6 = scene.getMeshByName("Sphere.005");
-			var control7 = scene.getMeshByName("Sphere.006");
-
-			control1.isPickable = control2.isPickable = control3.isPickable = control4.isPickable =
-			control5.isPickable = control6.isPickable = control7.isPickable = true;
-			
-			var switchCamInt = scene.getMeshByName("Switch_CamInt01");
-			switchCamInt.isPickable = true;
-		}
-		
 		const processClick = (clickedMesh) => {
 			if (clickedMesh.name.includes("Switch_")){
-				setActiveCamera(clickedMesh.name.replace("Switch_",""));
-			}
-			
-			if (clickedMesh.name.includes("Sphere")){
-				setColor(clickedMesh.material)
+				cameraManager.flyToCamera(clickedMesh.name.replace("Switch_", "").replace(".001", ""));
 			}
 		}
 
-		const setColor = (material) => {
-			var body = scene.getMeshByName("GEO_Plane_Body")
+		const setColor = (material, geo) => {
+			var body = scene.getMeshByName(geo)
 
 			body.material = material;
 		}
+		
+		const getTextFromUrl = function (url, callback, async = true) {
+			var request = new XMLHttpRequest();
+			request.open('GET', url, async);
+			request.onreadystatechange = function () {
+				if (request.readyState === 4 && request.status === 200) {
+					var type = request.getResponseHeader('Content-Type');
+					if (type.indexOf("text") !== 1) {
+						callback(request.responseText);
+					}
+				}
+			}
+			request.onerror = function () {
+				console.log("getTextFromUrl(): could not find url " + url);
+			}
+			request.send(null);
+		}
+		
+		const startRenderLoop = function (){
+			scene = createScene(); //Call the createScene function
 
-        const scene = createScene(); //Call the createScene function
+			// Register a render loop to repeatedly render the scene
+			engine.runRenderLoop(function () {
+					if (scene && scene.activeCamera) {
+						scene.render();
+					}
+				});
 
-        // Register a render loop to repeatedly render the scene
-        engine.runRenderLoop(function () {
-                if (scene && scene.activeCamera) {
-                    scene.render();
-                }
-            });
-
-        // Watch for browser/canvas resize events
-        window.addEventListener("resize", function () {
-                engine.resize();
-        });
+			// Watch for browser/canvas resize events
+			window.addEventListener("resize", function () {
+					engine.resize();
+			});
+		}
+		
+		getTextFromUrl(configURL, function (text) {
+			try {
+				config = JSON.parse(text);
+				console.log("config loaded:", config);
+				startRenderLoop();
+			} catch (e) {
+				console.error("JSON data of file " + configURL + " invalid", e);
+			}
+		});
+		
     </script>
-
+	
+	<div id="ui-app"></div>
    </body>
 
 </html>
