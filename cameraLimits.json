@@ -1,0 +1,44 @@
+{
+    "cameraLimits": [{
+            "name": "CamExt01",
+            "panLeft": -360,
+            "panRight": 360,
+            "tiltUp": 90,
+            "tiltDown": 0,
+            "zoomNear": 10,
+            "zoomFar": 15
+        }, {
+            "name": "CamExt02",
+            "panLeft": -120,
+            "panRight": -60,
+            "tiltUp": 90,
+            "tiltDown": 0,
+            "zoomNear": 10,
+            "zoomFar": 15
+        }, {
+            "name": "CamExt03",
+            "panLeft": 60,
+            "panRight": 120,
+            "tiltUp": 90,
+            "tiltDown":0,
+            "zoomNear": 10,
+            "zoomFar": 15
+        }, {
+            "name": "CamExt04",
+            "panLeft": -360,
+            "panRight": -360,
+            "tiltUp": 0,
+            "tiltDown": 0,
+            "zoomNear": 10,
+            "zoomFar": 10
+        }, {
+            "name": "CamInt01",
+            "panLeft": 90,
+            "panRight": 360,
+            "tiltUp": 70,
+            "tiltDown": 45,
+            "zoomNear": 0.4,
+            "zoomFar": 0.45
+        }
+    ]
+}

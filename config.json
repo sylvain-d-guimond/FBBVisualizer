@@ -1,9 +1,11 @@
 {
     "paths": {
-        "camerasURL": "../Models/cameras.glb",
-        "modelExtURL": "../Models/Exterior_and_Cams_without_Metallic.glb",
-        "modelIntURL": "../Models/Interior_and_Cam.glb",
-        "envURL": "../Models/Scene_Setup_for_WebGL_Environment_v002.glb",
+        "camerasURL": "../Models/Scene_Setup_for_WebGL_Camsv2.glb",
+        "modelExtURL": "../Models/Scene_Setup_for_WebGL_Ext.glb",
+        "modelIntURL": "../Models/Scene_Setup_for_WebGL_Int.glb",
+        "envURL": "../Models/Scene_Setup_for_WebGL_Env.glb",
+        "IBLURL": "../Models/autoshop.env",
+		"cameraLimitsURL": "cameraLimits.json",
 		"useSceneLoader": true
     },
     "variants": {

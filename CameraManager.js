@@ -9,6 +9,16 @@ function CameraManager(pipeline, postProcess, scene){
     this.scene = scene;
 }
 
+CameraManager.prototype.loadCameraLimits = function(cameraLimits){
+    //console.log("Reading camera limits:", cameraLimits);
+    var limits = JSON.parse(cameraLimits).cameraLimits;
+
+    //console.log("Read camera limits:", limits);
+    limits.forEach(limit => {
+        this.setCameraBounds(limit.name, limit.panLeft*(Math.PI/180), limit.panRight*(Math.PI/180), limit.tiltDown*(Math.PI/180), limit.tiltUp*(Math.PI/180), limit.zoomNear, limit.zoomFar);
+    });
+}
+
 CameraManager.prototype.checkAndAddCamera = function (cam) {
     this.cameras = this.cameras.filter(exCam => {
         return exCam.name !== cam.name;
@@ -38,13 +48,13 @@ CameraManager.prototype.alignCamera = function (camera) {
         return scCam.name === camera.name;
     })[0];
     sceneCam.getWorldMatrix().decompose(null, null, camera.position);
-    console.log("Align camera position", camera.name, camera.position);
+    //console.log("Align camera position", camera.name, camera.position);
 
     var cameraTarget = scene.getTransformNodeByName("Target_"+ sceneCam.name)
     if (cameraTarget){
         var target = new BABYLON.Vector3();
         cameraTarget.getWorldMatrix().decompose(null, null, target);
-        console.log("Align camera target:", camera.name, target);
+        //console.log("Align camera target:", camera.name, target);
         camera.setTarget(target);
     }
     camera.fov = sceneCam.fov;
@@ -55,17 +65,19 @@ CameraManager.prototype.setCameraBounds = function (name, xMin, xMax, yMin, yMax
         return cam.name === name;
     })[0];
 
-    console.log("Set camera bounds: ", camera);
+    console.log("Set camera bounds for", name, ":", camera);
+    if (camera){
     while (camera.alpha < xMin){camera.alpha += Math.PI;}
-    camera.upperRadiusLimit = zMax;
-    camera.lowerRadiusLimit = zMin;
-    camera.upperBetaLimit = yMax;
-    camera.lowerBetaLimit = yMin;
-    camera.upperAlphaLimit = xMax;
-    camera.lowerAlphaLimit = xMin;
-    camera.pinchPrecision = 500;
-    camera.wheelPrecision = 50;
-    camera.minZ = 0.01;
+        camera.upperRadiusLimit = zMax;
+        camera.lowerRadiusLimit = zMin;
+        camera.upperBetaLimit = yMax;
+        camera.lowerBetaLimit = yMin;
+        camera.upperAlphaLimit = xMax;
+        camera.lowerAlphaLimit = xMin;
+        camera.pinchPrecision = 500;
+        camera.wheelPrecision = 50;
+        camera.minZ = 0.01;
+    }
 }
 
 CameraManager.prototype.setActiveCamera = function (cameraName) {

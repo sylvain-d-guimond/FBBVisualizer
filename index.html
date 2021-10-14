@@ -38,6 +38,7 @@
 		<script src="CameraManager.js"></script>
 		<script src="VariantManager.js"></script>
 		<script src="DebugUI.js"></script>
+		<script src="FBBUI.js"></script>
 		<!--<script src="FBBUI.js"></script>
 		<link href="FBBUI.css" rel="stylesheet">-->
     </head>
@@ -50,18 +51,20 @@
         const canvas = document.getElementById("renderCanvas"); // Get the canvas element
         const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true}); // Generate the BABYLON 3D engine
 
-		const configURL = "config_cobra.json";
-		//const configURL = "config.json";
+		//const configURL = "https://www.radfahrrad.com/index.php/s/FkXwYfgCSykKorG/download/config.json";
+		const configURL = "config.json";
 		let scene = "";
 		var config = "";
 		var switches = [];
 		var cameraManager;
 		var variantManager;
+		var loadMgr;
+		var loadTime = Date.now();
 
 		const createScene = function () {
 
 			const scene = new BABYLON.Scene(engine);
-			scene.environmentTexture = new BABYLON.CubeTexture("../Models/autoshop.env", scene);
+			scene.environmentTexture = new BABYLON.CubeTexture(config.paths.IBLURL, scene);
 
 			//Needs an initial camera or Babylon complains, but still runs
 			const cam = new BABYLON.ArcRotateCamera("camera", -Math.PI / 4, Math.PI / 2.5, 10, BABYLON.Vector3(0, 1, 0), scene);
@@ -70,6 +73,15 @@
 			var spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
 
 			scene.clearColor = new BABYLON.Color3(0.85, 0.8, 0.77);
+
+			var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
+			var skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
+			skyboxMaterial.backFaceCulling = false;
+			skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("img/skybox/sky", scene);
+			skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+			skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+			skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+			skybox.material = skyboxMaterial;
 
 			//Add Postprocessing
 			pipeline = new BABYLON.DefaultRenderingPipeline("renderingPipeline", true);
@@ -94,10 +106,12 @@
 			postProcess.vignetteWeight = 10;
 			postProcess.vignetteStretch = 2;
 			postProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
-			postProcess.vignetteEnabled = true;
+			postProcess.vignetteEnabled = false;
 
 			cameraManager = new CameraManager(pipeline, postProcess, scene);
 			variantManager = new VariantManager(config);
+			loadMgr = new LoadManager(finishLoading);
+			loadMgr.useSceneLoader = config.paths.useSceneLoader;
 
 			var assetsManager = new BABYLON.AssetsManager(scene);
 			if (config.paths.useSceneLoader){
@@ -111,17 +125,24 @@
 				extTask.onSuccess = function (task){
 					console.log("Exterior loaded");
 					setMeshesNotClickable(task);
+					loadMgr.extLoaded = true;
+					loadMgr.check();
 				}
 
 				//Environment loaded
 				envTask.onSuccess = function (task) {
+					console.log("Environment loaded");
 					setMeshesNotClickable(task);
+					loadMgr.envLoaded = true;
+					loadMgr.check();
 				}
 
 				//Interior loaded
 				intTask.onSuccess = function (task) {
+					console.log("Interior loaded");
 					setMeshesNotClickable(task);
-					engine.hideLoadingUI();
+					loadMgr.intLoaded = true;
+					loadMgr.check();
 				}
 			}
 
@@ -149,6 +170,7 @@
 
 					//Import cameras from GLTF
 					loader.onCameraLoadedObservable.add((camera) => {
+						console.log("Found camera:", camera.name, camera);
 						if (!cameraManager.sceneCameras.includes(camera)){
 							cameraManager.sceneCameras.push(camera);
 						}
@@ -170,7 +192,7 @@
 						mesh.isPickable = false;
 
 						if (mesh.name.includes("Switch_")){
-							console.log("Found switch: ", mesh.name);
+							//console.log("Found switch: ", mesh.name);
 							mesh.isPickable = true;
 							switches.push(mesh);
 						}
@@ -184,17 +206,28 @@
 					assetContainer.addAllToScene();
 					initCameraLimits();
 					pipeline.addCamera(cameraManager.flyCam);
-					
-					
-					
-					if (!config.paths.useSceneLoader){
-						variantManager.discoverVariants(scene);
-						engine.hideLoadingUI();
-						var ui = new DebugUI();
-						ui.setupUI(variantManager, cameraManager);
-					}
+							
+					console.log("Set camera limits...");
+					getTextFromUrl(config.paths.cameraLimitsURL, function (text){ 
+						cameraManager.loadCameraLimits(text);
+						loadMgr.camsLoaded = true;
+						loadMgr.check();
+					});
 				},
 			)
+		}
+
+		const finishLoading = function(){
+			console.log("Discover variants...");
+			variantManager.discoverVariants(scene);
+			//console.log("Show Debug UI");
+			//var ui = new DebugUI();
+			//ui.setupUI(variantManager, cameraManager);
+			console.log("Show UI");
+			var fbbui = new FBBUI();
+			fbbui.setupUI(variantManager, cameraManager);
+			engine.hideLoadingUI();
+			console.log("Finished loading in", Date.now()-loadTime, "ms");
 		}
 
 		const setMeshesNotClickable = (meshTask) => {
@@ -206,8 +239,8 @@
 		//Initialize all camera limits
 		const initCameraLimits = () => {
 			cameraManager.alignCameras();
-			cameraManager.setCameraBounds("CamExt01", -2*Math.PI, 2*Math.PI, 0.5, 1.5, 5, 20);
-			cameraManager.setCameraBounds("CamInt01", Math.PI*0.6, Math.PI*2, 0.8, 1.5, 0.5, 0.55);
+			//cameraManager.setCameraBounds("CamExt01", -2*Math.PI, 2*Math.PI, 0.5, 1.5, 5, 20);
+			//cameraManager.setCameraBounds("CamInt01", Math.PI*0.6, Math.PI*2, 0.8, 1.5, 0.5, 0.55);
 			//setCameraBounds("CamInt01", -2*Math.PI, 3*Math.PI, 0.4, 1.5, 0.5, 1.5);
 
 			//Default Camera
@@ -258,6 +291,23 @@
 					engine.resize();
 			});
 		}
+
+		//Some load manager
+		function LoadManager(loadingDone){
+			this.intLoaded = false;
+			this.extLoaded = false;
+			this.envLoaded = false;
+			this.camsLoaded = false;
+			this.useSceneLoader = true;
+			this.loadingDone = loadingDone;
+		}
+
+		LoadManager.prototype.check = function() {
+			//console.log("Check Ext:",this.extLoaded,"Int:",this.intLoaded,"Env:",this.envLoaded,"Cams:",this.camsLoaded);
+			if (!this.useSceneLoader || (this.intLoaded && this.extLoaded && this.envLoaded && this.camsLoaded)){
+				this.loadingDone();
+			}
+		}
 		
 		getTextFromUrl(configURL, function (text) {
 			try {
@@ -272,6 +322,7 @@
     </script>
 	
 	<div id="ui-app"></div>
+	<iframe src="http://localhost:8080/FBBVisualizer/" height="200" width="300" title="Iframe Example"></iframe>
    </body>
 
 </html>

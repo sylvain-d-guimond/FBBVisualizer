@@ -5,44 +5,55 @@ function VariantManager(config){
 
 VariantManager.prototype.discoverVariants  = function (scene){
     let matVariantName = this.config.variants.material+this.config.variants.separator;
+
+    console.log("Discover variants named:", matVariantName, "in", scene.materials.length,"materials");
     scene.materials.forEach(material =>{
         if (material.name.includes(matVariantName)){
+            //console.log("Found material:", material.name);
             let regex = matVariantName+"([A-Za-z0-9]*)"+this.config.variants.separator+"([A-Za-z0-9]*)";
             let reMatVariant = new RegExp(regex);
             let matches = reMatVariant.exec(material.name);
-            if (matches && matches.length ===3){
-                let groupName = matches[1];
-                let variantName = matches[2];
+            if (matches !== null){
+                if (matches.length ===3){
+                    let groupName = matches[1];
+                    let variantName = matches[2];
 
-                var group = this.groups.filter(aGroup => {
-                    return aGroup.name === groupName;
-                });
-                
-                if (group.length < 1){
-                    group = new VariantGroup(groupName, this.config.variants.material);
-                    group.target = [];
-                    this.groups.push(group);
-                    console.log("Created material group:", groupName);
-                } else{ group = group[0];}
-                
-                group.variants.push(new Variant(variantName, material));
-                console.log("Created material variant:", variantName, "in group:", groupName);
+                    var group = this.groups.filter(aGroup => {
+                        return aGroup.name === groupName;
+                    });
+                    
+                    if (group.length < 1){
+                        group = new VariantGroup(groupName, this.config.variants.material);
+                        group.target = [];
+                        this.groups.push(group);
+                        console.log("Created material group:", groupName);
+                    } else{ group = group[0];}
+                    
+                    group.variants.push(new Variant(variantName, material));
+                    console.log("Created material variant:", variantName, "in group:", groupName);
+                } else{
+                    console.log("Material variant found but improperly formatted:", material.name);
+                }
             } else{
-                console.log("Material variant found but improperly formatted:", mesh.name);
+                console.log("Material variant found but improperly formatted:", material.name);
             }
         }
     });
 
 
     let geoVariantName = this.config.variants.base +this.config.variants.geometry+ this.config.variants.separator;
-    let matVariantTargetName = this.config.variants.base +this.config.variants.material+ this.config.variants.separator;
+    let matVariantTargetName = this.config.variants.material+ this.config.variants.separator;
+
+    console.log("Discover geo variants named:", geoVariantName, "and material targets named:", matVariantTargetName);
     scene.meshes.forEach(mesh => {
+        //console.log("Found mesh:", mesh.name);
         if (mesh.name.includes(geoVariantName)){
+            //console.log("Found geo variant mesh:", mesh.name);
             //Geometry variant found
             let regex = geoVariantName+"([A-Za-z0-9]*)"+this.config.variants.separator+"([A-Za-z0-9]*)";
             let reGeoVariant = new RegExp(regex);
             let matches = reGeoVariant.exec(mesh.name);
-            if (matches && matches.length === 3){
+            if (matches !== null && matches.length === 3){
                 let groupName = matches[1];
                 let variantName = matches[2];
 
@@ -65,13 +76,14 @@ VariantManager.prototype.discoverVariants  = function (scene){
         }
 
         if (mesh.name.includes(matVariantTargetName)){
-            let regex = matVariantTargetName+"([A-Za-z0-9]*)"+this.config.variants.separator+"([A-Za-z0-9]*)";
+            //console.log("Found mat variant mesh:", mesh.name);
+            let regex = matVariantTargetName+"([A-Za-z0-9]*)";//+this.config.variants.separator+"([A-Za-z0-9]*)";
             let reMatVariant = new RegExp(regex);
             let matches = reMatVariant.exec(mesh.name);
 
-            if (matches && matches.length === 3){
+            if (matches !== null && matches.length === 2){
                 let groupName = matches[1];
-                let variantName = matches[2];
+                //let variantName = matches[2];
                 
                 var group = this.groups.filter(aGroup => {
                     return aGroup.name === groupName &&
@@ -92,6 +104,23 @@ VariantManager.prototype.discoverVariants  = function (scene){
 }
 
 VariantManager.prototype.selectVariant = function (selectedVariant){
+    console.log("Select variant:", selectedVariant);
+
+    if (typeof selectedVariant === "string"){
+        //console.log("variant name found, looking for object");
+        var theGroup = this.groups.filter(aGroup => {
+            var theVariant = aGroup.variants.filter(aVariant => {
+                return aVariant.name.includes(selectedVariant);
+            })
+
+            var found = theVariant.length > 0;
+            if (found){
+                selectedVariant = theVariant[0];
+            }
+            return found;
+        })
+    }
+
     var group = this.groups.filter(aGroup => {
         return aGroup.variants.includes(selectedVariant);
     });

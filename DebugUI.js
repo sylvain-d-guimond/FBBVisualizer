@@ -27,23 +27,23 @@ DebugUI.prototype.setupUI = function(variantManager, cameraManager){
     advancedTexture.addControl(leftPanel);
 
     cameraManager.cameras.forEach(camera => {
-        addButton(camera.name, () => {cameraManager.flyToCamera(camera.name)}, leftPanel);
+        addButton(camera.name, () => {cameraManager.flyToCamera(camera.name)}, leftPanel, "orange");
     });
 
     variantManager.groups.forEach(group =>{
         group.variants.forEach(variant =>{
-            addButton(group.type + " " + variant.name, () => {variantManager.selectVariant(variant)}, rightPanel);
+            addButton(group.name + " " + variant.name, () => {variantManager.selectVariant(variant)}, rightPanel, (group.type === "mat"?"green":"blue"));
         });
     });
 }
 
-const addButton = function(text, func, panel){
+const addButton = function(text, func, panel, color){
     var button = BABYLON.GUI.Button.CreateSimpleButton("button", text);
     button.width = "150px"
     button.height = "40px";
     button.color = "white";
     button.cornerRadius = 20;
-    button.background = "green";
+    button.background = color;
     button.onPointerUpObservable.add(function(value) {
         func(value);
     });
