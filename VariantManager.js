@@ -110,7 +110,15 @@ VariantManager.prototype.selectVariant = function (selectedVariant){
         //console.log("variant name found, looking for object");
         var theGroup = this.groups.filter(aGroup => {
             var theVariant = aGroup.variants.filter(aVariant => {
-                return aVariant.name.includes(selectedVariant);
+                if (typeof selectedVariant === "string"){
+                    let variantSet = selectedVariant.split(' ');
+                    if (variantSet.length === 2){
+                        return aVariant.name.includes(variantSet[1]) &&
+                            aGroup.name.includes(variantSet[0]);
+                    }else{
+                        return aVariant.name.includes(selectedVariant);
+                    }
+                } else {return false;}
             })
 
             var found = theVariant.length > 0;
@@ -141,6 +149,14 @@ VariantManager.prototype.selectVariant = function (selectedVariant){
     } else{
         console.log("Group for variant",selectedVariant,"not found");
     }
+}
+
+VariantManager.prototype.selectDefaults = function(scene){
+    console.log("Select default variants");
+    scene.defaultVariants.forEach(aVariant => {
+        console.log("Select default variant:", aVariant);
+        this.selectVariant(aVariant);
+    })
 }
 
 /******* Variant Group ********/

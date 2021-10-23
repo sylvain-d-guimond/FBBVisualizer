@@ -8,67 +8,106 @@ FBBUI.prototype.setupUI = function(variantManager, cameraManager){
     //advancedTexture.layer.layerMask = 0x10000000;
     //advancedTexture.renderScale = 1.5;
 
-    var rightPanel = new BABYLON.GUI.StackPanel();
-    rightPanel.width = "300px";
-    rightPanel.isVertical = true;
-    rightPanel.paddingRight = "20px";
-    rightPanel.paddingBottom = "20px";
-    rightPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
-    rightPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
-    advancedTexture.addControl(rightPanel);
+    var leftPanel = new BABYLON.GUI.StackPanel();
+    leftPanel.width = "200px";
+    leftPanel.isVertical = true;
+    leftPanel.paddingRight = "20px";
+    leftPanel.paddingBottom = "20px";
+    leftPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_LEFT;
+    leftPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
+    advancedTexture.addControl(leftPanel);
 
     var outsidePanel = new BABYLON.GUI.StackPanel();
     outsidePanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM
 
-    var bottomPanel = new BABYLON.GUI.StackPanel();
-    bottomPanel.height = "80px";
-    bottomPanel.paddingBottom = "20px";
-    bottomPanel.isVertical = false;
-    bottomPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
-    bottomPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
-    outsidePanel.addControl(bottomPanel);
+    var extPanel = new BABYLON.GUI.StackPanel();
+    extPanel.height = "80px";
+    extPanel.paddingBottom = "20px";
+    extPanel.isVertical = false;
+    extPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    extPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+    outsidePanel.addControl(extPanel);
+    advancedTexture.addControl(outsidePanel);
+    
+    var intPanel = new BABYLON.GUI.StackPanel();
+    intPanel.height = "0px";
+    intPanel.paddingTop = "40px";
+    intPanel.paddingBottom = "20px";
+    intPanel.isVertical = false;
+    intPanel.horizontalAlignment = BABYLON.GUI.Control.HORIZONTAL_ALIGNMENT_CENTER;
+    intPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_BOTTOM;
+    outsidePanel.addControl(intPanel);
     advancedTexture.addControl(outsidePanel);
 
     addTexturedButton("", () => {
         variantManager.selectVariant("design101");
         variantManager.selectVariant("01blue");
-        }, bottomPanel, "white", "img/Variant_Geo_Plane_Body_Design101.png");
+        }, extPanel, "white", "img/Variant_Geo_Plane_Body_Design101.png");
     addTexturedButton("", () => {
         variantManager.selectVariant("design022");
         variantManager.selectVariant("03darkblue");
-        }, bottomPanel, "white", "img/Variant_Geo_Plane_Body_Design022.png");
+        }, extPanel, "white", "img/Variant_Geo_Plane_Body_Design022.png");
     addTexturedButton("", () => {
         variantManager.selectVariant("design003");
         variantManager.selectVariant("02dark");
-        }, bottomPanel, "white", "img/Variant_Geo_Plane_Body_Design003.png");
+        }, extPanel, "white", "img/Variant_Geo_Plane_Body_Design003.png");
+    
+    
+        addTexturedButton("", () => {
+            variantManager.selectVariant("01black");
+            }, intPanel, "black", "");
+            addTexturedButton("", () => {
+                variantManager.selectVariant("02greyblue");
+                }, intPanel, "blue", "");
 
     
     addTexturedButton("", () => {
         cameraManager.flyToCamera("CamExt01");
-        }, rightPanel, "white", "img/CamExt01.png");
+        intPanel.height = "-80px";
+        intPanel.paddingTop = "40px";
+        extPanel.height = "80px";
+        }, leftPanel, "white", "img/CamExt01.png");
     addTexturedButton("", () => {
         cameraManager.flyToCamera("CamExt02");
-        }, rightPanel, "white", "img/CamExt02.png");
+        intPanel.height = "-80px";
+        intPanel.paddingTop = "40px";
+        extPanel.height = "80px";
+        }, leftPanel, "white", "img/CamExt02.png");
     addTexturedButton("", () => {
         cameraManager.flyToCamera("CamExt03");
-        }, rightPanel, "white", "img/CamExt03.png");
+        intPanel.height = "-80px";
+        intPanel.paddingTop = "40px";
+        extPanel.height = "80px";
+        }, leftPanel, "white", "img/CamExt03.png");
     addTexturedButton("", () => {
         cameraManager.flyToCamera("CamExt04");
-        }, rightPanel, "white", "img/CamExt04.png");
+        intPanel.height = "-80px";
+        intPanel.paddingTop = "40px";
+        extPanel.height = "80px";
+        }, leftPanel, "white", "img/CamExt04.png");
     addTexturedButton("", () => {
         cameraManager.flyToCamera("CamInt01");
-        }, rightPanel, "white", "img/CamInt01.png");
+        intPanel.height = "80px";
+        intPanel.paddingTop = "0px";
+        extPanel.height = "-80px";
+        }, leftPanel, "white", "img/CamInt01.png");
+    addTexturedButton("", () => {
+        downloadObjectAsJson(config, "config");
+        }, leftPanel, "white", "img/CamInt01.png");
+    
     /*
     cameraManager.cameras.forEach(camera => {
-        addButton(camera.name, () => {cameraManager.flyToCamera(camera.name)}, bottomPanel, "orange");
+        addButton(camera.name, () => {cameraManager.flyToCamera(camera.name)}, extPanel, "orange");
     });
 
     variantManager.groups.forEach(group =>{
         group.variants.forEach(variant =>{
-            addButton(group.name + " " + variant.name, () => {variantManager.selectVariant(variant)}, rightPanel, (group.type === "mat"?"green":"blue"));
+            addButton(group.name + " " + variant.name, () => {variantManager.selectVariant(variant)}, leftPanel, (group.type === "mat"?"green":"blue"));
         });
     });*/
 }
+
+
 
 const addTexturedButton = function(text, func, panel, color, texture){
     var button = BABYLON.GUI.Button.CreateImageButton("button", text, texture);
@@ -85,10 +124,10 @@ const addTexturedButton = function(text, func, panel, color, texture){
     button.paddingRight = "10px";
     button.paddingTop = "10px";
     button.paddingBottom = "10px";
-    //button.background = color;
+    button.background = color;
     button.onPointerUpObservable.add(function(value) {
         func(value);
     });
     panel.addControl(button);  
-    console.log("Scale x y", button.image.scaleX, button.image.scaleY);
+    //console.log("Scale x y", button.image.scaleX, button.image.scaleY);
 }

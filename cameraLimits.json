@@ -4,41 +4,51 @@
             "panLeft": -360,
             "panRight": 360,
             "tiltUp": 90,
-            "tiltDown": 0,
-            "zoomNear": 10,
-            "zoomFar": 15
+            "tiltDown": 45,
+            "zoomNear": 5,
+            "zoomFar": 15,
+            "panSpeed": 1,
+            "tiltSpeed": 1
         }, {
             "name": "CamExt02",
-            "panLeft": -120,
-            "panRight": -60,
+            "panLeft": -110,
+            "panRight": -70,
             "tiltUp": 90,
-            "tiltDown": 0,
-            "zoomNear": 10,
-            "zoomFar": 15
+            "tiltDown": 70,
+            "zoomNear": 5,
+            "zoomFar": 12,
+            "panSpeed": 1,
+            "tiltSpeed": 1
         }, {
             "name": "CamExt03",
-            "panLeft": 60,
-            "panRight": 120,
+            "panLeft": 70,
+            "panRight": 110,
             "tiltUp": 90,
-            "tiltDown":0,
-            "zoomNear": 10,
-            "zoomFar": 15
+            "tiltDown": 70,
+            "zoomNear": 5,
+            "zoomFar": 12,
+            "panSpeed": 1,
+            "tiltSpeed": 1
         }, {
             "name": "CamExt04",
-            "panLeft": -360,
-            "panRight": -360,
-            "tiltUp": 0,
-            "tiltDown": 0,
+            "panLeft": -210,
+            "panRight": -150,
+            "tiltUp": 80,
+            "tiltDown": 1,
             "zoomNear": 10,
-            "zoomFar": 10
+            "zoomFar": 12,
+            "panSpeed": 1,
+            "tiltSpeed": 1
         }, {
             "name": "CamInt01",
-            "panLeft": 90,
+            "panLeft": -360,
             "panRight": 360,
-            "tiltUp": 70,
+            "tiltUp": 95,
             "tiltDown": 45,
             "zoomNear": 0.4,
-            "zoomFar": 0.45
+            "zoomFar": 0.4,
+            "panSpeed": -1,
+            "tiltSpeed": -4
         }
     ]
 }

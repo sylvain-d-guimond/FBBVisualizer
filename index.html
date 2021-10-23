@@ -3,7 +3,7 @@
 
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-        <title>FBB Visualizer</title>
+        <title>Babylon.js Visualizer</title>
 
         <style>
             html, body {
@@ -38,26 +38,25 @@
 		<script src="CameraManager.js"></script>
 		<script src="VariantManager.js"></script>
 		<script src="DebugUI.js"></script>
+		<script src="LoadManager.js"></script>
+		<script src="SessionManager.js"></script>
 		<script src="FBBUI.js"></script>
-		<!--<script src="FBBUI.js"></script>
-		<link href="FBBUI.css" rel="stylesheet">-->
     </head>
 
    <body>
-
     <canvas id="renderCanvas" touch-action="none"></canvas> <!-- touch-action="none" for best results from PEP -->
-
+		
     <script>
         const canvas = document.getElementById("renderCanvas"); // Get the canvas element
         const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true}); // Generate the BABYLON 3D engine
 
-		//const configURL = "https://www.radfahrrad.com/index.php/s/FkXwYfgCSykKorG/download/config.json";
-		const configURL = "config.json";
+		const configURL = "config_bristell.json";
 		let scene = "";
 		var config = "";
 		var switches = [];
 		var cameraManager;
 		var variantManager;
+		var sessionManager = new SessionManager();
 		var loadMgr;
 		var loadTime = Date.now();
 
@@ -65,198 +64,110 @@
 
 			const scene = new BABYLON.Scene(engine);
 			scene.environmentTexture = new BABYLON.CubeTexture(config.paths.IBLURL, scene);
+			scene.environmentTexture.rotationY = Math.PI/2+0.5;
 
 			//Needs an initial camera or Babylon complains, but still runs
 			const cam = new BABYLON.ArcRotateCamera("camera", -Math.PI / 4, Math.PI / 2.5, 10, BABYLON.Vector3(0, 1, 0), scene);
 
 			const light = new BABYLON.HemisphericLight("light", new BABYLON.Vector3(1, 1, 0));
-			var spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
+			//let spotLight = new BABYLON.SpotLight("spotLight", new BABYLON.Vector3(0, 30, -10), new BABYLON.Vector3(0, -1, 0), Math.PI / 3, 2, scene);
 
-			scene.clearColor = new BABYLON.Color3(0.85, 0.8, 0.77);
+			scene.clearColor = new BABYLON.Color3(0.04, 0.04, 0.04);
 
-			var skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
-			var skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
-			skyboxMaterial.backFaceCulling = false;
-			skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("img/skybox/sky", scene);
-			skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
-			skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
-			skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
-			skybox.material = skyboxMaterial;
+			if (config.paths.skyBoxURL){
+				let skybox = BABYLON.MeshBuilder.CreateBox("skyBox", {size:1000.0}, scene);
+				let skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMaterial", scene);
+				skyboxMaterial.backFaceCulling = false;
+				skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture(config.paths.skyBoxURL, scene);
+				skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+				skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+				skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+				skybox.material = skyboxMaterial;
+				console.log("Skybox:", skybox);
+				skybox.rotation.y = Math.PI + Math.PI/4;
+			}
 
 			//Add Postprocessing
+			
 			pipeline = new BABYLON.DefaultRenderingPipeline("renderingPipeline", true);
+
+			//fxaa
+			pipeline.fxaaEnabled = true;
 
 			//bloom
 			pipeline.bloomEnabled = true;
-			pipeline.bloomThreshold = 2;
-			pipeline.bloomWeight = 0.3;
+			pipeline.bloomThreshold = 1.5;
+			pipeline.bloomWeight = 0.6;
 			pipeline.bloomKernel = 64;
 			pipeline.bloomScale = 0.5;
 
 			//tonemapping
 			pipeline.imageProcessing.toneMappingEnabled = true;
-			pipeline.imageProcessing.contrast = 1.5;
+			pipeline.imageProcessing.contrast = 2;
 			pipeline.imageProcessing.exposure = 1;
 
 			//MSAA
-			//pipeline.samples = 4;
+			pipeline.samples = 4;
+
+			//Grain
+			pipeline.grainEnabled = true;
+			pipeline.grain.intensity = 12;
+			pipeline.grain.animated = true;
+
+			//Chromatic aberration
+			/*pipeline.chromaticAberrationEnabled = true;
+			pipeline.chromaticAberration.aberrationAmount = 200;
+			pipeline.chromaticAberration.radialIntensity = 4;
+			pipeline.chromaticAberration.direction.x = Math.PI;
+			pipeline.chromaticAberration.direction.y = Math.PI;*/
+
+			//Depth of field
+			/*pipeline.depthOfFieldEnabled = true;
+			pipeline.depthOfFieldBlurLevel = BABYLON.DepthOfFieldEffectBlurLevel.Medium;
+			pipeline.depthOfField.focusDistance = 10;
+			pipeline.depthOfField.fStop = 3.8;
+			pipeline.depthOfField.focalLength = 10;*/
 
 			//Vignette
-			postProcess = new BABYLON.ImageProcessingPostProcess("postProcessing", 1.0, cam);
+			postProcess = new BABYLON.ImageProcessingPostProcess("postProcessing", 1.0, cam, 2.0, engine, true);
+			/*
 			postProcess.vignetteWeight = 10;
 			postProcess.vignetteStretch = 2;
 			postProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
-			postProcess.vignetteEnabled = false;
+			postProcess.vignetteEnabled = true;
+			*/
 
 			cameraManager = new CameraManager(pipeline, postProcess, scene);
 			variantManager = new VariantManager(config);
-			loadMgr = new LoadManager(finishLoading);
-			loadMgr.useSceneLoader = config.paths.useSceneLoader;
-
-			var assetsManager = new BABYLON.AssetsManager(scene);
-			if (config.paths.useSceneLoader){
-				console.log("Using scene loader");
-				assetsManager.autoHideLoadingUI = false;
-				var extTask = assetsManager.addMeshTask("exterior task", "", config.paths.modelExtURL, "");
-				var envTask = assetsManager.addMeshTask("environment task", "", config.paths.envURL, "");
-				var intTask = assetsManager.addMeshTask("interior task", "", config.paths.modelIntURL, "");
-
-				//Exterior loaded
-				extTask.onSuccess = function (task){
-					console.log("Exterior loaded");
-					setMeshesNotClickable(task);
-					loadMgr.extLoaded = true;
-					loadMgr.check();
+			loadMgr = new LoadManager(config, cameraManager, scene, finishLoading);
+			loadMgr.loadScenesFromConfig();
+			sessionManager.checkParameters(function() {
+				console.log(sessionManager);
+				if (sessionManager.scene){
+					loadMgr.loadScenes(sessionManager.scene.paths.scenes);
 				}
-
-				//Environment loaded
-				envTask.onSuccess = function (task) {
-					console.log("Environment loaded");
-					setMeshesNotClickable(task);
-					loadMgr.envLoaded = true;
-					loadMgr.check();
-				}
-
-				//Interior loaded
-				intTask.onSuccess = function (task) {
-					console.log("Interior loaded");
-					setMeshesNotClickable(task);
-					loadMgr.intLoaded = true;
-					loadMgr.check();
-				}
-			}
-
-			loadAndUseModel(scene, config.paths.camerasURL);
-			assetsManager.load();
-
-			//Interaction
-			scene.onPointerDown = (evt, pickinfo) => {
-				//console.log("pickinfo", pickinfo);
-				if (pickinfo.hit){
-					console.log("RayCast Hit:", pickinfo.pickedMesh.name);
-					processClick(pickinfo.pickedMesh);
-				}
-			};
-			
-			//var UI = new FBBUI(4);
+			});
 
 			return scene;
 		}
 
-		const loadAndUseModel = (scene, url) => {
-			let loadedCamera = null;
-			BABYLON.SceneLoader.OnPluginActivatedObservable.addOnce(loader => {
-				if (loader.name === 'gltf') {
 
-					//Import cameras from GLTF
-					loader.onCameraLoadedObservable.add((camera) => {
-						console.log("Found camera:", camera.name, camera);
-						if (!cameraManager.sceneCameras.includes(camera)){
-							cameraManager.sceneCameras.push(camera);
-						}
-
-						//Convert loaded camera to ArcRotateCamera
-						//TODO: find a better way that doesn't create an extra camera
-						const arcCamera = new BABYLON.ArcRotateCamera(
-							camera.name,
-							//TODO: get actual proper initial angle from camera
-							-Math.PI / 4,
-							Math.PI / 2.5,
-							10,
-							camera.lockedTarget, scene);
-						cameraManager.checkAndAddCamera(arcCamera);
-					})
-
-					//Set all meshes as non-pickable by default
-					loader.onMeshLoadedObservable.add((mesh) => {
-						mesh.isPickable = false;
-
-						if (mesh.name.includes("Switch_")){
-							//console.log("Found switch: ", mesh.name);
-							mesh.isPickable = true;
-							switches.push(mesh);
-						}
-					})
-				}
-			})
-
-			//Load scene
-			BABYLON.SceneLoader.LoadAssetContainerAsync(url, undefined, scene).then(
-				(assetContainer) => {
-					assetContainer.addAllToScene();
-					initCameraLimits();
-					pipeline.addCamera(cameraManager.flyCam);
-							
-					console.log("Set camera limits...");
-					getTextFromUrl(config.paths.cameraLimitsURL, function (text){ 
-						cameraManager.loadCameraLimits(text);
-						loadMgr.camsLoaded = true;
-						loadMgr.check();
-					});
-				},
-			)
-		}
 
 		const finishLoading = function(){
 			console.log("Discover variants...");
 			variantManager.discoverVariants(scene);
+			variantManager.selectDefaults(config);
+			console.log("Configure cameras");
+			cameraManager.configureCameras(pipeline, postProcess);
+			cameraManager.setupReflections(config);
 			//console.log("Show Debug UI");
 			//var ui = new DebugUI();
-			//ui.setupUI(variantManager, cameraManager);
+			var ui = new FBBUI();
+			ui.setupUI(variantManager, cameraManager);
 			console.log("Show UI");
-			var fbbui = new FBBUI();
-			fbbui.setupUI(variantManager, cameraManager);
+			cameraManager.setActiveCamera(config.defaultCamera);
 			engine.hideLoadingUI();
 			console.log("Finished loading in", Date.now()-loadTime, "ms");
-		}
-
-		const setMeshesNotClickable = (meshTask) => {
-			meshTask.loadedMeshes.forEach((mesh) => {
-				mesh.isPickable = false;
-			});
-		}
-
-		//Initialize all camera limits
-		const initCameraLimits = () => {
-			cameraManager.alignCameras();
-			//cameraManager.setCameraBounds("CamExt01", -2*Math.PI, 2*Math.PI, 0.5, 1.5, 5, 20);
-			//cameraManager.setCameraBounds("CamInt01", Math.PI*0.6, Math.PI*2, 0.8, 1.5, 0.5, 0.55);
-			//setCameraBounds("CamInt01", -2*Math.PI, 3*Math.PI, 0.4, 1.5, 0.5, 1.5);
-
-			//Default Camera
-			cameraManager.setActiveCamera("CamExt01");
-		}
-
-		const processClick = (clickedMesh) => {
-			if (clickedMesh.name.includes("Switch_")){
-				cameraManager.flyToCamera(clickedMesh.name.replace("Switch_", "").replace(".001", ""));
-			}
-		}
-
-		const setColor = (material, geo) => {
-			var body = scene.getMeshByName(geo)
-
-			body.material = material;
 		}
 		
 		const getTextFromUrl = function (url, callback, async = true) {
@@ -271,7 +182,7 @@
 				}
 			}
 			request.onerror = function () {
-				console.log("getTextFromUrl(): could not find url " + url);
+				console.log("Status", request.status, "could not load url:", url);
 			}
 			request.send(null);
 		}
@@ -292,37 +203,61 @@
 			});
 		}
 
-		//Some load manager
-		function LoadManager(loadingDone){
-			this.intLoaded = false;
-			this.extLoaded = false;
-			this.envLoaded = false;
-			this.camsLoaded = false;
-			this.useSceneLoader = true;
-			this.loadingDone = loadingDone;
-		}
-
-		LoadManager.prototype.check = function() {
-			//console.log("Check Ext:",this.extLoaded,"Int:",this.intLoaded,"Env:",this.envLoaded,"Cams:",this.camsLoaded);
-			if (!this.useSceneLoader || (this.intLoaded && this.extLoaded && this.envLoaded && this.camsLoaded)){
-				this.loadingDone();
-			}
-		}
 		
 		getTextFromUrl(configURL, function (text) {
 			try {
 				config = JSON.parse(text);
-				console.log("config loaded:", config);
+				console.log("default config loaded:", config);
 				startRenderLoop();
 			} catch (e) {
 				console.error("JSON data of file " + configURL + " invalid", e);
 			}
 		});
+
+		//Drag and drop functionality
+		;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+			canvas.addEventListener(eventName, preventDefaults, false)
+		})
+		canvas.addEventListener("drop", drop, false);
+
+		function preventDefaults (e) {
+			e.preventDefault();
+			e.stopPropagation();
+		}
+
+		function drop(event){
+			console.log("Drop:", event);
+    		console.log(event.dataTransfer.files[0]);
+
+			/*event.dataTransfer.files.forEach(file => {
+				handleDrop(file);
+			})*/
+			handleDrop(event.dataTransfer.files[0]);
+		}
+
+		function handleDrop(file){
+			let formData = new FormData();
+
+			console.log("Uploading file:", file);
+			formData.append('file', file);
+			fetch("upload.php", {method: 'POST', body: formData})
+			.then(() => {condole.log("Upload done");})
+			.catch(() => {console.log("Error while uploading")});
+		}
+
+		function downloadObjectAsJson(exportObj, exportName){
+			var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportObj));
+			var downloadAnchorNode = document.createElement('a');
+			downloadAnchorNode.setAttribute("href",     dataStr);
+			downloadAnchorNode.setAttribute("download", exportName + ".json");
+			document.body.appendChild(downloadAnchorNode); // required for firefox
+			downloadAnchorNode.click();
+			downloadAnchorNode.remove();
+		}
 		
     </script>
 	
 	<div id="ui-app"></div>
-	<iframe src="http://localhost:8080/FBBVisualizer/" height="200" width="300" title="Iframe Example"></iframe>
    </body>
 
 </html>

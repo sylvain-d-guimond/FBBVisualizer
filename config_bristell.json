@@ -1,0 +1,36 @@
+{
+    "paths": {
+        "camerasURL": "../Models/Scene_Setup_for_WebGL_Camsv3.glb",
+		"scenes": [{
+			"name": "Exterior",
+            "path": "../Models/",
+            "file": "Scene_Setup_for_WebGL_Extv3.glb"
+			},{
+            "name": "Interior",
+            "path": "../Models/",
+            "file": "Scene_Setup_for_WebGL_Intv2.glb"
+            },{
+            "name": "Environment",
+            "path": "../Models/",
+            "file": "Scene_Setup_for_WebGL_EnvV2.glb"
+            }
+		],
+        "IBLURL": "../Models/autoshop.env",
+		"cameraLimitsURL": "cameraLimits.json",
+		"skyBoxURL": "img/skybox/box"
+    },
+    "variants": {
+        "base": "Variant_",
+        "geometry": "geo",
+        "material": "mat",
+        "separator": "_"
+    },
+    "defaultCamera": "CamExt01",
+	"defaultVariants": ["01black"],
+    "reflections": [{
+        "target": "GEO_Floor",
+        "level": 1,
+        "reflectedObjects": ["Variant_mat_plane", "GEO_Hangar", "skyBox", "Variant_mat_glas", "GEO_Cockpit"]
+    }
+]
+}
