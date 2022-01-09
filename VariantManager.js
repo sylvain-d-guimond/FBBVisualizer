@@ -103,6 +103,23 @@ VariantManager.prototype.discoverVariants  = function (scene){
     });
 }
 
+VariantManager.prototype.setVariantFromConfig = function(variantName){
+    let variant = this.config.variantOptions.filter(v => {return v.name === variantName;})[0];
+
+    variant.assignments.forEach(varAssign =>{
+        let mesh = scene.meshes.filter(m => {
+            return m.name === varAssign.mesh;})[0];
+        let material = scene.materials.filter(mat => {return mat.name === varAssign.material;})[0];
+
+        if (!mesh){
+            mesh = scene.meshes.filter(m=>{return m.name === varAssign.mesh+"_primitive"+varAssign.slot;})[0];
+        }
+
+        console.log("Found mesh", mesh, "and material", material);
+        mesh.material = material;
+    })
+}
+
 VariantManager.prototype.selectVariant = function (selectedVariant){
     console.log("Select variant:", selectedVariant);
 
@@ -155,7 +172,7 @@ VariantManager.prototype.selectDefaults = function(scene){
     console.log("Select default variants");
     scene.defaultVariants.forEach(aVariant => {
         console.log("Select default variant:", aVariant);
-        this.selectVariant(aVariant);
+        this.setVariantFromConfig(aVariant);
     })
 }
 

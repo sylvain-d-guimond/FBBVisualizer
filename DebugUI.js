@@ -26,15 +26,40 @@ DebugUI.prototype.setupUI = function(variantManager, cameraManager){
     leftPanel.verticalAlignment = BABYLON.GUI.Control.VERTICAL_ALIGNMENT_CENTER;
     advancedTexture.addControl(leftPanel);
 
+    console.log("Add camera debug buttons");
     cameraManager.cameras.forEach(camera => {
         addButton(camera.name, () => {cameraManager.flyToCamera(camera.name)}, leftPanel, "orange");
     });
 
+    console.log("Add variant debug buttons");
     variantManager.groups.forEach(group =>{
         group.variants.forEach(variant =>{
             addButton(group.name + " " + variant.name, () => {variantManager.selectVariant(variant)}, rightPanel, (group.type === "mat"?"green":"blue"));
         });
     });
+
+    console.log("Add animation debug buttons");
+    scene.animationGroups.forEach(animGrp => {
+        console.log("1");
+        addButton("Play " + animGrp.name, () => {animGrp.play();}, leftPanel, "black");
+        console.log("2");
+        addButton("Stop " + animGrp.name, () => {animGrp.stop();}, leftPanel, "black");
+        console.log("3");
+        animGrp.loopAnimation = false;
+        console.log("4");
+        animGrp.stop();
+    })
+    scene.animationGroups.forEach(animGrp => {
+        console.log("1");
+        addButton("Play " + animGrp.name, () => {animGrp.start(false, 1, animGrp.to, animGrp.from);}, leftPanel, "black");
+        console.log("2");
+        addButton("Stop " + animGrp.name, () => {animGrp.stop();}, leftPanel, "black");
+        console.log("3");
+        animGrp.loopAnimation = false;
+        console.log("Speed Ratio", animGrp);
+        console.log("4");
+        animGrp.stop();
+    })
 }
 
 const addButton = function(text, func, panel, color){

@@ -108,7 +108,7 @@ LoadManager.prototype.loadAndUseModel = function(scene, url, onFinished) {
         (assetContainer) => {
             assetContainer.addAllToScene();
             this.cameraManager.alignCameras();
-            pipeline.addCamera(cameraManager.flyCam);
+            //pipeline.addCamera(cameraManager.flyCam);
                     
             console.log("Set camera limits...");
             getTextFromUrl(config.paths.cameraLimitsURL, function (text){ 

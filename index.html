@@ -41,6 +41,7 @@
 		<script src="LoadManager.js"></script>
 		<script src="SessionManager.js"></script>
 		<script src="FBBUI.js"></script>
+		<script src="PostProcessManager.js"></script>
     </head>
 
    <body>
@@ -56,6 +57,8 @@
 		var switches = [];
 		var cameraManager;
 		var variantManager;
+		var postProcessManager;
+		var pipeline;
 		var sessionManager = new SessionManager();
 		var loadMgr;
 		var loadTime = Date.now();
@@ -88,7 +91,7 @@
 			}
 
 			//Add Postprocessing
-			
+			/*
 			pipeline = new BABYLON.DefaultRenderingPipeline("renderingPipeline", true);
 
 			//fxaa
@@ -112,7 +115,7 @@
 			//Grain
 			pipeline.grainEnabled = true;
 			pipeline.grain.intensity = 12;
-			pipeline.grain.animated = true;
+			pipeline.grain.animated = true;*/
 
 			//Chromatic aberration
 			/*pipeline.chromaticAberrationEnabled = true;
@@ -129,15 +132,16 @@
 			pipeline.depthOfField.focalLength = 10;*/
 
 			//Vignette
-			postProcess = new BABYLON.ImageProcessingPostProcess("postProcessing", 1.0, cam, 2.0, engine, true);
+			//postProcess = new BABYLON.ImageProcessingPostProcess("postProcessing", 1.0, cam, 2.0, engine, true);
 			/*
 			postProcess.vignetteWeight = 10;
 			postProcess.vignetteStretch = 2;
 			postProcess.vignetteColor = new BABYLON.Color4(0, 0, 0, 0);
 			postProcess.vignetteEnabled = true;
 			*/
-
-			cameraManager = new CameraManager(pipeline, postProcess, scene);
+			//console.log("Config:", config);
+			postProcessManager = new PostProcessManager(scene, config.postProcessSettings);
+			cameraManager = new CameraManager(scene, postProcessManager, config);
 			variantManager = new VariantManager(config);
 			loadMgr = new LoadManager(config, cameraManager, scene, finishLoading);
 			loadMgr.loadScenesFromConfig();
@@ -158,16 +162,20 @@
 			variantManager.discoverVariants(scene);
 			variantManager.selectDefaults(config);
 			console.log("Configure cameras");
-			cameraManager.configureCameras(pipeline, postProcess);
+			//cameraManager.configureCameras(pipeline, postProcess);
 			cameraManager.setupReflections(config);
-			//console.log("Show Debug UI");
+			console.log("Set up UI");
 			//var ui = new DebugUI();
 			var ui = new FBBUI();
 			ui.setupUI(variantManager, cameraManager);
-			console.log("Show UI");
+			console.log("Set up Post Processing");
+			//postProcessManager.setupUI();
+			cameraManager.setupCameraFade(postProcessManager);
 			cameraManager.setActiveCamera(config.defaultCamera);
+			scene.animationGroups.forEach(anim => {anim.stop();})
 			engine.hideLoadingUI();
 			console.log("Finished loading in", Date.now()-loadTime, "ms");
+			console.log("Scene", scene);
 		}
 		
 		const getTextFromUrl = function (url, callback, async = true) {

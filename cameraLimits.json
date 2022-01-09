@@ -45,8 +45,18 @@
             "panRight": 360,
             "tiltUp": 95,
             "tiltDown": 45,
-            "zoomNear": 0.4,
+            "zoomNear": 0.05,
             "zoomFar": 0.4,
+            "panSpeed": -1,
+            "tiltSpeed": -4
+        }, {
+            "name": "CamInt02",
+            "panLeft": -360,
+            "panRight": 360,
+            "tiltUp": 95,
+            "tiltDown": 45,
+            "zoomNear": 0.4,
+            "zoomFar": 1,
             "panSpeed": -1,
             "tiltSpeed": -4
         }

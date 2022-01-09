@@ -1,23 +1,36 @@
 {
     "paths": {
-        "camerasURL": "../Models/Scene_Setup_for_WebGL_Camsv3.glb",
-		"scenes": [{
-			"name": "Exterior",
-            "path": "../Models/",
-            "file": "Scene_Setup_for_WebGL_Extv3.glb"
-			},{
-            "name": "Interior",
-            "path": "../Models/",
-            "file": "Scene_Setup_for_WebGL_Intv2.glb"
-            },{
-            "name": "Environment",
-            "path": "../Models/",
-            "file": "Scene_Setup_for_WebGL_EnvV2.glb"
+        "camerasURL": "../Models/Scene_Setup_for_WebGL_Camsv6.glb",
+        "scenes": [
+            {
+                "name": "Plane",
+                "path": "models/",
+                "file": "airplane_reduced.glb"
+            },
+            {
+                "name": "Environment",
+                "path": "../Models/",
+                "file": "Scene_Setup_for_WebGL_EnvV3.glb"
+            },
+            {
+                "name": "Dolly_cam",
+                "path": "models/",
+                "file": "Dolly_camera.glb"
+            },
+            {
+                "name": "Wing_cam",
+                "path": "models/",
+                "file": "Scene_Setup_for_WebGL_Alpha_Content_5_wing.glb"
+            },
+            {
+                "name": "Tail_cam",
+                "path": "models/",
+                "file": "Tail_camera.glb"
             }
-		],
+        ],
         "IBLURL": "../Models/autoshop.env",
-		"cameraLimitsURL": "cameraLimits.json",
-		"skyBoxURL": "img/skybox/box"
+        "cameraLimitsURL": "cameraLimits.json",
+        "skyBoxURL": "img/skybox/box"
     },
     "variants": {
         "base": "Variant_",
@@ -26,11 +39,199 @@
         "separator": "_"
     },
     "defaultCamera": "CamExt01",
-	"defaultVariants": ["01black"],
-    "reflections": [{
-        "target": "GEO_Floor",
-        "level": 1,
-        "reflectedObjects": ["Variant_mat_plane", "GEO_Hangar", "skyBox", "Variant_mat_glas", "GEO_Cockpit"]
-    }
-]
+    "defaultVariants": [
+        "design01"
+    ],
+    "reflections": [
+        {
+            "target": "GEO_Floor",
+            "level": 1,
+            "reflectedObjects": [
+                "Bris_32_Alpha_v001_body_LOD1",
+                "GEO_Hangar",
+                "skyBox",
+                "Bris_32_Alpha_v001_wheels.005_primitive1",
+                "Variant_mat_plane",
+                "Bris_32_Alpha_v001_canopy_LOD1_primitive1"
+            ]
+        }
+    ],
+    "flights": [
+        {
+            "name": "Dolly_cam",
+            "camera": "Dolly_Cam",
+            "anims": ["Dolly_anim"],
+            "fovAnim": [
+                {"frame": 0, "value": 0.2241},
+                {"frame": 240, "value": 1.0248}
+            ]
+        },
+        {
+            "name": "Wing_cam",
+            "camera": "Camera.007",
+            "anims": ["Camera.004Action"],
+            "fovAnim": [
+                {"frame": 0, "value": 0.7427},
+                {"frame": 60, "value": 0.7427},
+                {"frame": 200, "value": 1.1},
+                {"frame": 240, "value": 1.1}
+            ]
+        },
+        {
+            "name": "Tail_cam",
+            "camera": "Tail_cam",
+            "anims": ["Dolly_RigAction"]
+        }
+    ],
+    "animations": [
+        {
+            "name": "canopy_open",
+            "speed": 3,
+            "frames": 100,
+            "groups": [
+                "Bris_32_Alpha_v001_Left_shock_lower1:Mesh|Take 001|BaseLayer",
+                "Bris_32_Alpha_v001_Left_shock_upper:Mesh|Take 001|BaseLayer",
+                "Bris_32_Alpha_v001_Right_shock_lower1:Mesh|Take 001|BaseLayer",
+                "Bris_32_Alpha_v001_Right_shock_upper1:Mesh|Take 001|BaseLayer",
+                "canopy_low_fix_:Mesh.001|Take 001|BaseLayer"
+            ]
+        },
+        {
+            "name": "canopy_close",
+            "speed": -3,
+            "frames": 100,
+            "groups": [
+                "Bris_32_Alpha_v001_Left_shock_lower1:Mesh|Take 001|BaseLayer",
+                "Bris_32_Alpha_v001_Left_shock_upper:Mesh|Take 001|BaseLayer",
+                "Bris_32_Alpha_v001_Right_shock_lower1:Mesh|Take 001|BaseLayer",
+                "Bris_32_Alpha_v001_Right_shock_upper1:Mesh|Take 001|BaseLayer",
+                "canopy_low_fix_:Mesh.001|Take 001|BaseLayer"
+            ]
+        },
+        {
+            "name": "right_door_open",
+            "speed": 3,
+            "frames": 100,
+            "groups": [
+                "Bris_32_Alpha_v001_right_wing_door2:Mesh|Take 001|BaseLayer"
+            ]
+        },
+        {
+            "name": "right_door_close",
+            "speed": -3,
+            "frames": 100,
+            "groups": [
+                "Bris_32_Alpha_v001_right_wing_door2:Mesh|Take 001|BaseLayer"
+            ]
+        },
+        {
+            "name": "left_door_open",
+            "speed": 3,
+            "frames": 100,
+            "groups": [
+                "Bris_32_Alpha_v001_left_wing_door2:Mesh|Take 001|BaseLayer"
+            ]
+        },
+        {
+            "name": "left_door_close",
+            "speed": -3,
+            "frames": 100,
+            "groups": [
+                "Bris_32_Alpha_v001_left_wing_door2:Mesh|Take 001|BaseLayer"
+            ]
+        }
+    ],
+    "variantOptions": [
+        {
+            "name": "design01",
+            "assignments": [
+                {
+                    "material": "Variant_mat_plane_design101",
+                    "mesh": "Variant_mat_plane",
+                    "slot": 0
+                },
+                {
+                    "material": "Variant_mat_glas_01blue",
+                    "mesh": "Variant_mat_glas",
+                    "slot": 0
+                },
+                {
+                    "material": "Variant_mat_plane_design101_canopy",
+                    "mesh": "Variant_mat_glas",
+                    "slot": 1
+                },
+                {
+                    "material": "Variant_mat_plane_design101_wing_doors",
+                    "mesh": "Bris_32_Alpha_v001_left_wing_door_LOD1",
+                    "slot": 1
+                },
+                {
+                    "material": "Variant_mat_plane_design101_wing_doors",
+                    "mesh": "Bris_32_Alpha_v001_right_wing_door_LOD1",
+                    "slot": 1
+                }
+            ]
+        },
+        {
+            "name": "design02",
+            "assignments": [
+                {
+                    "material": "Variant_mat_plane_design022",
+                    "mesh": "Variant_mat_plane",
+                    "slot": 0
+                },
+                {
+                    "material": "Variant_mat_glas_03darkblue",
+                    "mesh": "Variant_mat_glas",
+                    "slot": 0
+                },
+                {
+                    "material": "Variant_mat_plane_design022_canopy",
+                    "mesh": "Variant_mat_glas",
+                    "slot": 1
+                },
+                {
+                    "material": "Variant_mat_plane_design202_wing_door_left",
+                    "mesh": "Bris_32_Alpha_v001_left_wing_door_LOD1",
+                    "slot": 1
+                },
+                {
+                    "material": "Variant_mat_plane_design202_wing_door_left",
+                    "mesh": "Bris_32_Alpha_v001_right_wing_door_LOD1",
+                    "slot": 1
+                }
+            ]
+        },
+        {
+            "name": "design03",
+            "assignments": [
+                {
+                    "material": "Variant_mat_plane_design003",
+                    "mesh": "Variant_mat_plane",
+                    "slot": 0
+                },
+                {
+                    "material": "Variant_mat_glas_02dark",
+                    "mesh": "Variant_mat_glas",
+                    "slot": 0
+                },
+                {
+                    "material": "Variant_mat_plane_design003_canopy",
+                    "mesh": "Variant_mat_glas",
+                    "slot": 1
+                },
+                {
+                    "material": "Variant_mat_plane_design003_wing_door_left",
+                    "mesh": "Bris_32_Alpha_v001_left_wing_door_LOD1",
+                    "slot": 1
+                },
+                {
+                    "material": "Variant_mat_plane_design003_wing_door_right",
+                    "mesh": "Bris_32_Alpha_v001_right_wing_door_LOD1",
+                    "slot": 1
+                }
+            ]
+        }
+    ],
+    "postProcessSettings": "postProcessSettings.json"
 }
